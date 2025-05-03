@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>메모장 (공유 기능 포함)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f4f6;
+      padding: 20px;
+      margin: 0;
+    }
+
+    #saveButton {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+
+    #saveButton:hover {
+      background-color: #1e40af;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 70px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      margin-top: 20px;
+    }
+
+    #history {
+      margin-top: 30px;
+    }
+
+    .note {
+      background-color: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .buttons {
+      margin-top: 10px;
+    }
+
+    .buttons button {
+      margin-right: 10px;
+      padding: 5px 10px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .copy-btn {
+      background-color: #10b981;
+      color: white;
+    }
+
+    .share-btn {
+      background-color: #3b82f6;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <button id="saveButton" onclick="saveMemo()">저장</button>
+  <h1>메모장</h1>
+  <textarea id="memo" placeholder="여기에 메모를 작성하세요..."></textarea>
+
+  <div id="history">
+    <h2>저장된 메모</h2>
+    <div id="noteList"></div>
+  </div>
+
+  <script>
+    const memoBox = document.getElementById('memo');
+    const noteList = document.getElementById('noteList');
+
+    function saveMemo() {
+      const content = memoBox.value.trim();
+      if (!content) {
+        alert('내용이 비어 있습니다.');
+        return;
+      }
+
+      const now = new Date();
+      const timestamp = now.toLocaleString();
+
+      const newNote = { content, timestamp };
+
+      let notes = JSON.parse(localStorage.getItem('notes') || '[]');
+      notes.unshift(newNote);
+      localStorage.setItem('notes', JSON.stringify(notes));
+      memoBox.value = "";
+      renderNotes();
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("복사되었습니다!");
+      }).catch(err => {
+        alert("복사 실패: " + err);
+      });
+    }
+
+    function shareText(text) {
+      if (navigator.share) {
+        navigator.share({
+          text: text
+        }).catch(err => {
+          console.error("공유 실패:", err);
+        });
+      } else {
+        alert("이 브라우저에서는 공유 기능이 지원되지 않습니다.");
+      }
+    }
+
+    function renderNotes() {
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+      noteList.innerHTML = "";
+      notes.forEach(note => {
+        const div = document.createElement('div');
+        div.className = 'note';
+
+        const time = document.createElement('div');
+        time.className = 'timestamp';
+        time.textContent = note.timestamp;
+
+        const content = document.createElement('div');
+        content.textContent = note.content;
+
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'buttons';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.textContent = '복사';
+        copyBtn.onclick = () => copyToClipboard(note.content);
+
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'share-btn';
+        shareBtn.textContent = '공유';
+        shareBtn.onclick = () => shareText(note.content);
+
+        btnGroup.appendChild(copyBtn);
+        btnGroup.appendChild(shareBtn);
+
+        div.appendChild(time);
+        div.appendChild(content);
+        div.appendChild(btnGroup);
+        noteList.appendChild(div);
+      });
+    }
+
+    window.onload = renderNotes;
+  </script>
+</body>
+</html>
